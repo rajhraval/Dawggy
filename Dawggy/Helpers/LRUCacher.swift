@@ -31,7 +31,7 @@ final class ImageLRUCache: LRUCache {
 
     private var diskManager: ImageDiskManager!
 
-    init(capacity: Int = 2) {
+    init(capacity: Int = 20) {
         self.capacity = capacity
         self.diskManager = ImageDiskManager(capacity: capacity)
     }
@@ -41,15 +41,17 @@ final class ImageLRUCache: LRUCache {
         if let node = nodes[key] {
             node.value = value
             moveToHead(node)
+            Log.info("Updated node for key \(key) and moved to head.")
         } else {
+            let newNode = ImageNode(key: key, image: value)
+            if nodes.count >= capacity, let oldTail = tail {
+                nodes.removeValue(forKey: oldTail.key)
+                removeNode(oldTail)
+                Log.info("Cache full. Removed tail node with key \(oldTail.key).")
+            }
             nodes[key] = newNode
             addNode(newNode)
-            if nodes.count <= capacity {
-                if let tailNode = tail {
-                    removeNode(tailNode)
-                    nodes.removeValue(forKey: tailNode.key)
-                }
-            }
+            Log.info("Added new node for key \(key).")
         }
     }
 
