@@ -10,6 +10,8 @@ import Foundation
 protocol DiskManager {
     associatedtype Value
     var fileManager: FileManager { get }
+    var capacity: Int { get set }
+
     func saveToDisk(value: Value, for key: String)
     func loadFromDisk(for key: String) -> Value?
     func loadAllFromDisk() -> [Value]

@@ -23,21 +23,20 @@ final class GenerateViewModel: ObservableObject {
         Task {
             do {
                 dogResponse = try await dogService.getRandomDog()
-                saveImageToCache(from: dogResponse)
+                await saveImageToCache(from: dogResponse)
             } catch let error {
                 Log.error(error)
             }
         }
     }
 
-    private func saveImageToCache(from response: DogResponse?) {
+    private func saveImageToCache(from response: DogResponse?) async {
         guard let response = response else { return }
         Task(priority: .background) {
             do {
                 let data = try await dogService.getDogImageData(from: response.imageURL)
-                let key = "Dawggy-\(response.imageName)"
                 if let image = UIImage(data: data) {
-                    imageCacher.set(image, for: key)
+                    imageCacher.set(image, for: response.imageName)
                 }
             } catch let error {
                 Log.error(error)

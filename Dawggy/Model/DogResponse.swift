@@ -17,7 +17,7 @@ struct DogResponse: Codable {
     }
 
     var imageName: String {
-        return "Dawggy-Dog-\(UUID().uuidString)"
+        return "Dawggy-\(UUID().uuidString)"
     }
 
     var imageURL: URL {

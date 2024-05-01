@@ -9,10 +9,17 @@ import UIKit.UIImage
 
 final class ImageDiskManager: DiskManager {
 
+    var capacity: Int
+
+    init(capacity: Int) {
+        self.capacity = capacity
+    }
+
     func saveToDisk(value: UIImage, for key: String) {
         let url = getDocumentsDirectory().appendingPathComponent("\(key).png")
         do {
             try value.toPNGData.write(to: url)
+            manageStorage()
             Log.info("Saved Image to disk: \(url.path)")
         } catch let error {
             Log.error(error)
@@ -61,6 +68,35 @@ final class ImageDiskManager: DiskManager {
         } catch let error {
             Log.error(error)
             return false
+        }
+    }
+
+    func manageStorage() {
+        do {
+            let directoryURL = getDocumentsDirectory()
+            let fileURLs = try fileManager.contentsOfDirectory(at: directoryURL, includingPropertiesForKeys: [.creationDateKey], options: .skipsHiddenFiles)
+
+            // Mapping files with their creation dates and sorting them
+            let filesWithDates = try fileURLs.map { url -> (url: URL, creationDate: Date) in
+                let resourceValues = try url.resourceValues(forKeys: [.creationDateKey])
+                guard let creationDate = resourceValues.creationDate else {
+                    throw NSError(domain: "ManageStorageError", code: 1001, userInfo: [NSLocalizedDescriptionKey: "Creation date not available for \(url.lastPathComponent)"])
+                }
+                return (url: url, creationDate: creationDate)
+            }.sorted {
+                $0.creationDate > $1.creationDate // Sort by date descending (newest first)
+            }
+
+            // Determine the files to remove if there are more than the capacity allows
+            let filesToRemove = filesWithDates.dropFirst(capacity)
+
+            // Remove files exceeding the capacity
+            for file in filesToRemove {
+                try fileManager.removeItem(at: file.url)
+                print("Removed old file: \(file.url.lastPathComponent)")
+            }
+        } catch {
+            print("Error managing storage: \(error)")
         }
     }
 

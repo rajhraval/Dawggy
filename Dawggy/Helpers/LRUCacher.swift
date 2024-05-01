@@ -31,9 +31,9 @@ final class ImageLRUCache: LRUCache {
 
     private var diskManager: ImageDiskManager!
 
-    init(capacity: Int = 1, diskManager: ImageDiskManager = ImageDiskManager()) {
+    init(capacity: Int = 2) {
         self.capacity = capacity
-        self.diskManager = diskManager
+        self.diskManager = ImageDiskManager(capacity: capacity)
     }
 
     func set(_ value: UIImage, for key: String) {
@@ -47,7 +47,6 @@ final class ImageLRUCache: LRUCache {
             if nodes.count <= capacity {
                 if let tailNode = tail {
                     removeNode(tailNode)
-                    diskManager.saveToDisk(value: tailNode.value, for: tailNode.key)
                     nodes.removeValue(forKey: tailNode.key)
                 }
             }
@@ -75,6 +74,7 @@ final class ImageLRUCache: LRUCache {
     }
 
     private func addNode(_ node: ImageNode) {
+        diskManager.saveToDisk(value: node.value, for: node.key)
         node.next = head
         node.previous = nil
         head?.previous = node
